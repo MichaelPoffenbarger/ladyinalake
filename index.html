@@ -540,69 +540,16 @@
                         vec4 color = texture2D(u_image, distortedUV);
                         
                         // Color shifting
-                        float colorShiftAmount = u_colorShift * 0.02;
-                        
-                        // Spiral angle calculations
-                        float spiralAngle1 = u_time * 0.5;
-                        float spiralAngle2 = u_time * 0.7;
-                        float spiralAngle3 = u_time * 0.9;
-                        float spiralAngle4 = u_time * 1.1;
-                        
-                        // Multiple color samples for each channel with spiral patterns
-                        vec4 redShift1 = texture2D(u_image, distortedUV + vec2(
-                            cos(spiralAngle1) * colorShiftAmount * 0.8,
-                            sin(spiralAngle1) * colorShiftAmount * 0.8
-                        ));
-                        vec4 redShift2 = texture2D(u_image, distortedUV + vec2(
-                            cos(spiralAngle2) * colorShiftAmount * 0.6,
-                            sin(spiralAngle2) * colorShiftAmount * 0.6
-                        ));
-                        vec4 redShift3 = texture2D(u_image, distortedUV + vec2(
-                            cos(spiralAngle3) * colorShiftAmount * 0.4,
-                            sin(spiralAngle3) * colorShiftAmount * 0.4
-                        ));
-                        
-                        vec4 greenShift1 = texture2D(u_image, distortedUV + vec2(
-                            cos(spiralAngle1 + 2.094) * colorShiftAmount * 0.7,  // 120 degrees
-                            sin(spiralAngle1 + 2.094) * colorShiftAmount * 0.7
-                        ));
-                        vec4 greenShift2 = texture2D(u_image, distortedUV + vec2(
-                            cos(spiralAngle2 + 2.094) * colorShiftAmount * 0.5,
-                            sin(spiralAngle2 + 2.094) * colorShiftAmount * 0.5
-                        ));
-                        vec4 greenShift3 = texture2D(u_image, distortedUV + vec2(
-                            cos(spiralAngle3 + 2.094) * colorShiftAmount * 0.3,
-                            sin(spiralAngle3 + 2.094) * colorShiftAmount * 0.3
-                        ));
-                        
-                        vec4 blueShift1 = texture2D(u_image, distortedUV + vec2(
-                            cos(spiralAngle1 + 4.189) * colorShiftAmount * 0.9,  // 240 degrees
-                            sin(spiralAngle1 + 4.189) * colorShiftAmount * 0.9
-                        ));
-                        vec4 blueShift2 = texture2D(u_image, distortedUV + vec2(
-                            cos(spiralAngle2 + 4.189) * colorShiftAmount * 0.7,
-                            sin(spiralAngle2 + 4.189) * colorShiftAmount * 0.7
-                        ));
-                        vec4 blueShift3 = texture2D(u_image, distortedUV + vec2(
-                            cos(spiralAngle3 + 4.189) * colorShiftAmount * 0.5,
-                            sin(spiralAngle3 + 4.189) * colorShiftAmount * 0.5
-                        ));
-                        
-                        // Combine multiple samples for each channel with varying weights
-                        float red = (redShift1.r * 0.4 + redShift2.r * 0.3 + redShift3.r * 0.3);
-                        float green = (greenShift1.g * 0.4 + greenShift2.g * 0.3 + greenShift3.g * 0.3);
-                        float blue = (blueShift1.b * 0.4 + blueShift2.b * 0.3 + blueShift3.b * 0.3);
-                        
-                        // Create final color with complex variations
+                        float colorShiftAmount = u_colorShift * 0.01;
                         vec4 shiftedColor = vec4(
-                            red * (1.0 + sin(u_time * 0.3) * 0.15) * (1.0 + sin(u_time * 1.2) * 0.1),
-                            green * (1.0 + sin(u_time * 0.5) * 0.15) * (1.0 + sin(u_time * 1.5) * 0.1),
-                            blue * (1.0 + sin(u_time * 0.7) * 0.15) * (1.0 + sin(u_time * 1.8) * 0.1),
+                            texture2D(u_image, distortedUV + vec2(colorShiftAmount, 0.0)).r,
+                            color.g,
+                            texture2D(u_image, distortedUV - vec2(colorShiftAmount, 0.0)).b,
                             color.a
                         );
                         
                         // Mix original and shifted color based on distance from center
-                        color = mix(color, shiftedColor, portalFactor * 0.9);
+                        color = mix(color, shiftedColor, portalFactor);
                         
                         // Add glow at the portal edge
                         float edgeGlow = smoothstep(portalRadius + portalEdge * 2.0, portalRadius - portalEdge * 2.0, dist) 
