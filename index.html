@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Water Portal</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+        }
+        
+        #container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            filter: drop-shadow(0 0 10px rgba(0, 238, 255, 0.3));
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #webgl-canvas {
+            z-index: 1;
+        }
+        
+        #particle-canvas {
+            z-index: 2;
+            pointer-events: none;
+        }
+        
+        #glitch-canvas {
+            z-index: 3;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        
+        #ui-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            width: 90%;
+            max-width: 800px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            transition: all 0.5s ease;
+            display: none;
+        }
+        
+        .ui-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        
+        .effect-btn {
+            background: linear-gradient(45deg, #120038, #0a0a2a);
+            color: #00eeff;
+            border: 1px solid #00eeff;
+            border-radius: 30px;
+            padding: 8px 15px;
+            margin: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px #00eeff;
+            box-shadow: 0 0 10px rgba(0, 238, 255, 0.3);
+        }
+        
+        .effect-btn:hover, .effect-btn.active {
+            background: linear-gradient(45deg, #00eeff, #0077ff);
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 238, 255, 0.8);
+            transform: translateY(-2px);
+        }
+        
+        .slider-container {
+            width: 100%;
+            padding: 0 10px;
+            margin-bottom: 10px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            color: #00eeff;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .custom-range {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #120038, #00eeff);
+            outline: none;
+        }
+        
+        .custom-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00eeff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 238, 255, 0.8);
+        }
+        
+        .preset-btn {
+            background: linear-gradient(45deg, #ff00cc, #3333ff);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(255, 0, 204, 0.5);
+        }
+        
+        .preset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(255, 0, 204, 0.8);
+        }
+        
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+        
+        .loader {
+            width: 100px;
+            height: 100px;
+            border: 5px solid #00eeff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .cosmic-title {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 28px;
+            font-weight: 300;
+            color: #00eeff;
+            text-shadow: 0 0 10px #00eeff;
+            z-index: 10;
+            letter-spacing: 3px;
+            opacity: 0.9;
+        }
+        
+        .hide-ui {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #00eeff;
+            border: 1px solid #00eeff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+        
+        .hide-ui:hover {
+            background: rgba(0, 238, 255, 0.2);
+        }
+        
+        .portal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.8) 70%);
+            pointer-events: none;
+            z-index: 4;
+            mix-blend-mode: overlay;
+        }
+        
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.9);
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 0.9; }
+            100% { opacity: 0.7; }
+        }
+        
+        .cosmic-dust {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIj48ZmlsdGVyIGlkPSJub2lzZSIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuNjUiIG51bU9jdGF2ZXM9IjMiIHN0aXRjaFRpbGVzPSJzdGl0Y2giIHJlc3VsdD0ibm9pc2UiLz48ZmVTcGVjdWxhckxpZ2h0aW5nIHNwZWN1bGFyRXhwb25lbnQ9IjIwIiBzcGVjdWxhckNvbnN0YW50PSIxLjMiIHN1cmZhY2VTY2FsZT0iMy4wIiBsaWdodGluZy1jb2xvcj0iIzAwZWVmZiIgaW49Im5vaXNlIiByZXN1bHQ9InNoaW5lIj48ZmVQb2ludExpZ2h0IHg9IjAiIHk9IjAiIHo9IjIwMCIvPjwvZmVTcGVjdWxhckxpZ2h0aW5nPjxmZUNvbXBvc2l0ZSBpbj0ic2hpbmUiIGluMj0iU291cmNlQWxwaGEiIG9wZXJhdG9yPSJpbiIgcmVzdWx0PSJzcGVja2xlcyIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjMDAwIi8+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI0MDAiIGZpbHRlcj0idXJsKCNub2lzZSkiIG9wYWNpdHk9IjAuMyIvPjwvc3ZnPg==');
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 3;
+            mix-blend-mode: screen;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="loader"></div>
+        <div>Initializing</div>
+    </div>
+    
+    <div class="cosmic-title"></div>
+    
+    <div class="hide-ui">
+        <i class="fas fa-cog"></i>
+    </div>
+    
+    <div id="container">
+        <canvas id="webgl-canvas"></canvas>
+        <canvas id="particle-canvas"></canvas>
+        <canvas id="glitch-canvas"></canvas>
+        <div class="portal-overlay"></div>
+        <div class="vignette"></div>
+        <div class="cosmic-dust"></div>
+    </div>
+    
+    <div id="ui-container">
+        <div class="ui-row">
+            <button class="preset-btn" data-preset="cosmic">Cosmic Voyage</button>
+            <button class="preset-btn" data-preset="dream">Dream Realm</button>
+            <button class="preset-btn" data-preset="glitch">Digital Glitch</button>
+            <button class="preset-btn" data-preset="psychedelic">Psychedelic</button>
+        </div>
+        
+        <div class="ui-row">
+            <button class="effect-btn" data-effect="portal">Portal Effect</button>
+            <button class="effect-btn" data-effect="particles">Cosmic Particles</button>
+            <button class="effect-btn" data-effect="ripple">Ripple Distortion</button>
+            <button class="effect-btn" data-effect="glitch">Glitch Reality</button>
+            <button class="effect-btn" data-effect="kaleidoscope">Kaleidoscope</button>
+        </div>
+        
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Distortion Intensity</span>
+                <span id="distortion-value">5.0</span>
+            </div>
+            <input type="range" class="custom-range" id="distortion" min="0" max="10" step="0.1" value="5.0">
+        </div>
+        
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Time Flow</span>
+                <span id="time-value">1.0</span>
+            </div>
+            <input type="range" class="custom-range" id="time-flow" min="0.1" max="3" step="0.1" value="1.0">
+        </div>
+        
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Color Shift</span>
+                <span id="color-value">0.5</span>
+            </div>
+            <input type="range" class="custom-range" id="color-shift" min="0" max="1" step="0.01" value="0.5">
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Three.js for WebGL -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        // Main application
+        $(document).ready(function() {
+            // Global variables
+            let webglCanvas, particleCanvas, glitchCanvas;
+            let webglCtx, particleCtx, glitchCtx;
+            let imageLoaded = false;
+            let originalImage = new Image();
+            let settings = {
+                distortion: 1.0,
+                timeFlow: 0.75,
+                colorShift: 0.25,
+                effects: {
+                    portal: true,
+                    particles: true,
+                    ripple: true,
+                    glitch: true,
+                    kaleidoscope: false
+                }
+            };
+            
+            let time = 0;
+            let particles = [];
+            let mouseX = 0, mouseY = 0;
+            let lastMouseX = 0, lastMouseY = 0;
+            let mouseSpeed = 0;
+            let portalCenter = { x: 0, y: 0 };
+            let glitchTimer = 0;
+            let glitchInterval = 0;
+            let animationFrameId;
+            let shaderProgram, vertexBuffer, textureBuffer;
+            let uTime, uResolution, uMouse, uDistortion, uColorShift;
+            let texture;
+            let colorShiftTime = 0;
+            let colorShiftDirection = 1;
+            let colorShiftPauseTimer = 0;
+            const COLOR_SHIFT_PAUSE_DURATION = 0.1;
+            
+            // Initialize the application
+            function init() {
+                setupCanvases();
+                setupWebGL();
+                setupEventListeners();
+                
+                // Load the image
+                originalImage.crossOrigin = "anonymous";
+                originalImage.src = "img/raneelake.png";
+                originalImage.onload = function() {
+                    imageLoaded = true;
+                    createTexture();
+                    resizeCanvases();
+                    initParticles();
+                    
+                    // Hide loading screen
+                    $("#loading").fadeOut(1000);
+                    
+                    // Start animation loop
+                    animate();
+                };
+            }
+            
+            // Setup canvases
+            function setupCanvases() {
+                webglCanvas = document.getElementById('webgl-canvas');
+                particleCanvas = document.getElementById('particle-canvas');
+                glitchCanvas = document.getElementById('glitch-canvas');
+                
+                webglCtx = webglCanvas.getContext('webgl') || webglCanvas.getContext('experimental-webgl');
+                particleCtx = particleCanvas.getContext('2d');
+                glitchCtx = glitchCanvas.getContext('2d');
+                
+                if (!webglCtx) {
+                    alert('WebGL not supported. Please use a modern browser.');
+                    return;
+                }
+                
+                resizeCanvases();
+            }
+            
+            // Resize canvases to window size
+            function resizeCanvases() {
+                webglCanvas.width = window.innerWidth;
+                webglCanvas.height = window.innerHeight;
+                particleCanvas.width = window.innerWidth;
+                particleCanvas.height = window.innerHeight;
+                glitchCanvas.width = window.innerWidth;
+                glitchCanvas.height = window.innerHeight;
+                
+                if (webglCtx) {
+                    webglCtx.viewport(0, 0, webglCanvas.width, webglCanvas.height);
+                    
+                    if (uResolution) {
+                        webglCtx.uniform2f(uResolution, webglCanvas.width, webglCanvas.height);
+                    }
+                }
+                
+                portalCenter.x = window.innerWidth / 2;
+                portalCenter.y = window.innerHeight / 2;
+            }
+            
+            // Setup WebGL
+            function setupWebGL() {
+                // Vertex shader
+                const vertexShaderSource = `
+                    attribute vec2 a_position;
+                    attribute vec2 a_texCoord;
+                    varying vec2 v_texCoord;
+                    
+                    void main() {
+                        gl_Position = vec4(a_position, 0.0, 1.0);
+                        v_texCoord = a_texCoord;
+                    }
+                `;
+                
+                // Fragment shader
+                const fragmentShaderSource = `
+                    precision mediump float;
+                    
+                    uniform sampler2D u_image;
+                    uniform float u_time;
+                    uniform vec2 u_resolution;
+                    uniform vec2 u_mouse;
+                    uniform float u_distortion;
+                    uniform float u_colorShift;
+                    
+                    varying vec2 v_texCoord;
+                    
+                    // Noise functions
+                    float random(vec2 st) {
+                        return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+                    }
+                    
+                    vec2 hash(vec2 p) {
+                        p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+                        return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+                    }
+                    
+                    float noise(vec2 p) {
+                        const float K1 = 0.366025404;
+                        const float K2 = 0.211324865;
+                        
+                        vec2 i = floor(p + (p.x + p.y) * K1);
+                        vec2 a = p - i + (i.x + i.y) * K2;
+                        vec2 o = (a.x > a.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                        vec2 b = a - o + K2;
+                        vec2 c = a - 1.0 + 2.0 * K2;
+                        
+                        vec3 h = max(0.5 - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.0);
+                        vec3 n = h * h * h * h * vec3(dot(a, hash(i + 0.0)), dot(b, hash(i + o)), dot(c, hash(i + 1.0)));
+                        
+                        return dot(n, vec3(70.0));
+                    }
+                    
+                    float fbm(vec2 p) {
+                        float f = 0.0;
+                        float w = 0.5;
+                        for (int i = 0; i < 5; i++) {
+                            f += w * noise(p);
+                            p *= 2.0;
+                            w *= 0.5;
+                        }
+                        return f;
+                    }
+                    
+                    void main() {
+                        vec2 uv = v_texCoord;
+                        vec2 center = vec2(0.5, 0.5);
+                        
+                        // Normalized mouse position
+                        vec2 mouse = u_mouse / u_resolution;
+                        
+                        // Calculate distance from center
+                        float dist = distance(uv, center);
+                        
+                        // Portal effect
+                        float portalStrength = u_distortion * 0.02;
+                        float portalRadius = 0.5 + sin(u_time * 0.2) * 0.05;
+                        float portalEdge = 0.1 + sin(u_time * 0.3) * 0.02;
+                        
+                        // Ripple effect
+                        float rippleSpeed = u_time * u_distortion * 0.1;
+                        float rippleFreq = 20.0 + u_distortion * 2.0;
+                        float rippleAmp = 0.01 * u_distortion;
+                        
+                        // Distortion based on noise
+                        float noiseScale = 4.0;
+                        float noiseTime = u_time * 0.1 * u_distortion;
+                        vec2 noiseCoord = uv * noiseScale + noiseTime;
+                        float noiseSample = fbm(noiseCoord) * u_distortion * 0.05;
+                        
+                        // Apply distortion
+                        vec2 distortedUV = uv;
+                        
+                        // Portal distortion
+                        float portalFactor = smoothstep(portalRadius + portalEdge, portalRadius - portalEdge, dist);
+                        distortedUV = mix(uv, center + (uv - center) * (1.0 + portalStrength * sin(dist * 10.0 - u_time)), portalFactor);
+                        
+                        // Ripple distortion
+                        float ripple = sin(dist * rippleFreq - rippleSpeed) * rippleAmp / (dist + 0.1);
+                        distortedUV += ripple * (uv - center);
+                        
+                        // Noise distortion
+                        distortedUV += noiseSample * vec2(cos(u_time), sin(u_time));
+                        
+                        // Mouse interaction
+                        float mouseDist = distance(uv, mouse);
+                        float mouseInfluence = 0.05 * u_distortion / (mouseDist + 0.1);
+                        distortedUV = mix(distortedUV, mouse, mouseInfluence * 0.1);
+                        
+                        // Sample the texture with distorted coordinates
+                        vec4 color = texture2D(u_image, distortedUV);
+                        
+                        // Color shifting
+                        float colorShiftAmount = u_colorShift * 0.1;
+                        vec4 shiftedColor = vec4(
+                            texture2D(u_image, distortedUV + vec2(colorShiftAmount, 0.0)).r,
+                            color.g,
+                            texture2D(u_image, distortedUV - vec2(colorShiftAmount, 0.0)).b,
+                            color.a
+                        );
+                        
+                        // Mix original and shifted color based on distance from center
+                        color = mix(color, shiftedColor, portalFactor);
+                        
+                        // Add glow at the portal edge
+                        float edgeGlow = smoothstep(portalRadius + portalEdge * 1.5, portalRadius - portalEdge * 1.5, dist) 
+                                       - smoothstep(portalRadius + portalEdge * 0.5, portalRadius - portalEdge * 3.0, dist);
+                        vec3 glowColor = mix(vec3(0.0, 0.8, 1.0), vec3(0.8, 0.0, 1.0), sin(u_time * 0.5) * 0.5 + 0.5);
+                        color.rgb = mix(color.rgb, glowColor, edgeGlow * 0.7);
+                        
+                        // Vignette effect
+                        float vignette = 1.0 - dist * 1.5;
+                        vignette = smoothstep(0.0, 0.7, vignette);
+                        color.rgb *= vignette;
+                        
+                        // Enhance blue for water
+                        color.b = mix(color.b, color.b * 1.3, portalFactor);
+                        
+                        gl_FragColor = color;
+                    }
+                `;
+                
+                // Create shaders
+                const vertexShader = createShader(webglCtx, webglCtx.VERTEX_SHADER, vertexShaderSource);
+                const fragmentShader = createShader(webglCtx, webglCtx.FRAGMENT_SHADER, fragmentShaderSource);
+                
+                // Create program
+                shaderProgram = createProgram(webglCtx, vertexShader, fragmentShader);
+                
+                // Look up attribute locations
+                const positionAttributeLocation = webglCtx.getAttribLocation(shaderProgram, "a_position");
+                const texCoordAttributeLocation = webglCtx.getAttribLocation(shaderProgram, "a_texCoord");
+                
+                // Look up uniform locations
+                uTime = webglCtx.getUniformLocation(shaderProgram, "u_time");
+                uResolution = webglCtx.getUniformLocation(shaderProgram, "u_resolution");
+                uMouse = webglCtx.getUniformLocation(shaderProgram, "u_mouse");
+                uDistortion = webglCtx.getUniformLocation(shaderProgram, "u_distortion");
+                uColorShift = webglCtx.getUniformLocation(shaderProgram, "u_colorShift");
+                
+                // Create buffers
+                vertexBuffer = webglCtx.createBuffer();
+                webglCtx.bindBuffer(webglCtx.ARRAY_BUFFER, vertexBuffer);
+                
+                // Define vertices for a rectangle covering the entire canvas
+                const vertices = [
+                    -1.0, -1.0,
+                     1.0, -1.0,
+                    -1.0,  1.0,
+                    -1.0,  1.0,
+                     1.0, -1.0,
+                     1.0,  1.0
+                ];
+                
+                webglCtx.bufferData(webglCtx.ARRAY_BUFFER, new Float32Array(vertices), webglCtx.STATIC_DRAW);
+                
+                // Create texture coordinates buffer
+                textureBuffer = webglCtx.createBuffer();
+                webglCtx.bindBuffer(webglCtx.ARRAY_BUFFER, textureBuffer);
+                
+                // Define texture coordinates
+                const texCoords = [
+                    0.0, 1.0,
+                    1.0, 1.0,
+                    0.0, 0.0,
+                    0.0, 0.0,
+                    1.0, 1.0,
+                    1.0, 0.0
+                ];
+                
+                webglCtx.bufferData(webglCtx.ARRAY_BUFFER, new Float32Array(texCoords), webglCtx.STATIC_DRAW);
+                
+                // Set up attributes
+                webglCtx.useProgram(shaderProgram);
+                
+                webglCtx.bindBuffer(webglCtx.ARRAY_BUFFER, vertexBuffer);
+                webglCtx.enableVertexAttribArray(positionAttributeLocation);
+                webglCtx.vertexAttribPointer(positionAttributeLocation, 2, webglCtx.FLOAT, false, 0, 0);
+                
+                webglCtx.bindBuffer(webglCtx.ARRAY_BUFFER, textureBuffer);
+                webglCtx.enableVertexAttribArray(texCoordAttributeLocation);
+                webglCtx.vertexAttribPointer(texCoordAttributeLocation, 2, webglCtx.FLOAT, false, 0, 0);
+                
+                // Set initial uniform values
+                webglCtx.uniform2f(uResolution, webglCanvas.width, webglCanvas.height);
+                webglCtx.uniform2f(uMouse, mouseX, mouseY);
+                webglCtx.uniform1f(uDistortion, settings.distortion);
+                webglCtx.uniform1f(uColorShift, settings.colorShift);
+            }
+            
+            // Create a shader
+            function createShader(gl, type, source) {
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                
+                const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+                if (success) {
+                    return shader;
+                }
+                
+                console.error(gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+            }
+            
+            // Create a program
+            function createProgram(gl, vertexShader, fragmentShader) {
+                const program = gl.createProgram();
+                gl.attachShader(program, vertexShader);
+                gl.attachShader(program, fragmentShader);
+                gl.linkProgram(program);
+                
+                const success = gl.getProgramParameter(program, gl.LINK_STATUS);
+                if (success) {
+                    return program;
+                }
+                
+                console.error(gl.getProgramInfoLog(program));
+                gl.deleteProgram(program);
+            }
+            
+            // Create texture from image
+            function createTexture() {
+                texture = webglCtx.createTexture();
+                webglCtx.bindTexture(webglCtx.TEXTURE_2D, texture);
+                
+                // Set texture parameters
+                webglCtx.texParameteri(webglCtx.TEXTURE_2D, webglCtx.TEXTURE_WRAP_S, webglCtx.CLAMP_TO_EDGE);
+                webglCtx.texParameteri(webglCtx.TEXTURE_2D, webglCtx.TEXTURE_WRAP_T, webglCtx.CLAMP_TO_EDGE);
+                webglCtx.texParameteri(webglCtx.TEXTURE_2D, webglCtx.TEXTURE_MIN_FILTER, webglCtx.LINEAR);
+                webglCtx.texParameteri(webglCtx.TEXTURE_2D, webglCtx.TEXTURE_MAG_FILTER, webglCtx.LINEAR);
+                
+                // Upload image to texture
+                webglCtx.texImage2D(webglCtx.TEXTURE_2D, 0, webglCtx.RGBA, webglCtx.RGBA, webglCtx.UNSIGNED_BYTE, originalImage);
+            }
+            
+            // Initialize particles
+            function initParticles() {
+                particles = [];
+                const particleCount = 0;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    particles.push({
+                        x: Math.random() * particleCanvas.width,
+                        y: Math.random() * particleCanvas.height,
+                        size: Math.random() * 3 + 1,
+                        speedX: (Math.random() - 0.5) * 2,
+                        speedY: (Math.random() - 0.5) * 2,
+                        color: `rgba(${Math.floor(Math.random() * 100 + 155)}, ${Math.floor(Math.random() * 100 + 155)}, 255, ${Math.random() * 0.5 + 0.2})`,
+                        life: Math.random() * 100
+                    });
+                }
+            }
+            
+            // Setup event listeners
+            function setupEventListeners() {
+                // Window resize
+                window.addEventListener('resize', resizeCanvases);
+                
+                // Mouse movement
+                document.addEventListener('mousemove', function(e) {
+                    mouseX = e.clientX;
+                    mouseY = e.clientY;
+                    
+                    // Calculate mouse speed
+                    mouseSpeed = Math.sqrt(
+                        Math.pow(mouseX - lastMouseX, 2) + 
+                        Math.pow(mouseY - lastMouseY, 2)
+                    ) * 0.1;
+                    
+                    lastMouseX = mouseX;
+                    lastMouseY = mouseY;
+                });
+                
+                // Touch movement
+                document.addEventListener('touchmove', function(e) {
+                    if (e.touches.length > 0) {
+                        mouseX = e.touches[0].clientX;
+                        mouseY = e.touches[0].clientY;
+                        
+                        // Calculate mouse speed
+                        mouseSpeed = Math.sqrt(
+                            Math.pow(mouseX - lastMouseX, 2) + 
+                            Math.pow(mouseY - lastMouseY, 2)
+                        ) * 0.1;
+                        
+                        lastMouseX = mouseX;
+                        lastMouseY = mouseY;
+                    }
+                });
+                
+                // UI controls
+                $('.effect-btn').on('click', function() {
+                    const effect = $(this).data('effect');
+                    settings.effects[effect] = !settings.effects[effect];
+                    $(this).toggleClass('active');
+                });
+                
+                $('#distortion').on('input', function() {
+                    settings.distortion = parseFloat($(this).val());
+                    $('#distortion-value').text(settings.distortion.toFixed(1));
+                });
+                
+                $('#time-flow').on('input', function() {
+                    settings.timeFlow = parseFloat($(this).val());
+                    $('#time-value').text(settings.timeFlow.toFixed(1));
+                });
+                
+                $('#color-shift').on('input', function() {
+                    settings.colorShift = parseFloat($(this).val());
+                    $('#color-value').text(settings.colorShift.toFixed(2));
+                });
+                
+                // Preset buttons
+                $('.preset-btn').on('click', function() {
+                    const preset = $(this).data('preset');
+                    applyPreset(preset);
+                });
+                
+                // Hide/show UI
+                $('.hide-ui').on('click', function() {
+                    $('#ui-container').toggle();
+                    $(this).find('i').toggleClass('fa-cog fa-eye');
+                });
+                
+                // Set initial state of hide/show button
+                $('.hide-ui i').removeClass('fa-cog').addClass('fa-eye');
+                
+                // Set initial active effects
+                for (const effect in settings.effects) {
+                    if (settings.effects[effect]) {
+                        $(`.effect-btn[data-effect="${effect}"]`).addClass('active');
+                    }
+                }
+            }
+            
+            // Apply preset
+            function applyPreset(preset) {
+                switch (preset) {
+                    case 'cosmic':
+                        settings.distortion = 2.0;
+                        settings.timeFlow = 1.2;
+                        settings.colorShift = 0.7;
+                        settings.effects = {
+                            portal: true,
+                            particles: true,
+                            ripple: true,
+                            glitch: false,
+                            kaleidoscope: false
+                        };
+                        break;
+                    case 'dream':
+                        settings.distortion = 3.0;
+                        settings.timeFlow = 0.5;
+                        settings.colorShift = 0.3;
+                        settings.effects = {
+                            portal: true,
+                            particles: true,
+                            ripple: false,
+                            glitch: false,
+                            kaleidoscope: true
+                        };
+                        break;
+                    case 'glitch':
+                        settings.distortion = 8.0;
+                        settings.timeFlow = 1.5;
+                        settings.colorShift = 0.8;
+                        settings.effects = {
+                            portal: true,
+                            particles: false,
+                            ripple: false,
+                            glitch: true,
+                            kaleidoscope: false
+                        };
+                        break;
+                    case 'psychedelic':
+                        settings.distortion = 9.0;
+                        settings.timeFlow = 2.0;
+                        settings.colorShift = 1.0;
+                        settings.effects = {
+                            portal: true,
+                            particles: true,
+                            ripple: true,
+                            glitch: false,
+                            kaleidoscope: true
+                        };
+                        break;
+                }
+                
+                // Update UI
+                $('#distortion').val(settings.distortion);
+                $('#distortion-value').text(settings.distortion.toFixed(1));
+                
+                $('#time-flow').val(settings.timeFlow);
+                $('#time-value').text(settings.timeFlow.toFixed(1));
+                
+                $('#color-shift').val(settings.colorShift);
+                $('#color-value').text(settings.colorShift.toFixed(2));
+                
+                // Update effect buttons
+                $('.effect-btn').removeClass('active');
+                for (const effect in settings.effects) {
+                    if (settings.effects[effect]) {
+                        $(`.effect-btn[data-effect="${effect}"]`).addClass('active');
+                    }
+                }
+            }
+            
+            // Animation loop
+            function animate() {
+                time += 0.01 * settings.timeFlow;
+                
+                // Update color shift animation
+                if (colorShiftPauseTimer > 0) {
+                    colorShiftPauseTimer -= 0.01;
+                } else {
+                    colorShiftTime += 0.01 * colorShiftDirection;
+                    
+                    if (colorShiftTime >= 10) {
+                        colorShiftTime = 10;
+                        colorShiftDirection = -1;
+                        colorShiftPauseTimer = COLOR_SHIFT_PAUSE_DURATION;
+                    } else if (colorShiftTime <= 0) {
+                        colorShiftTime = 0;
+                        colorShiftDirection = 1;
+                        colorShiftPauseTimer = COLOR_SHIFT_PAUSE_DURATION;
+                    }
+                    
+                    settings.colorShift = colorShiftTime;
+                    $('#color-shift').val(settings.colorShift);
+                    $('#color-value').text(settings.colorShift.toFixed(2));
+                }
+                
+                // Update WebGL
+                if (imageLoaded) {
+                    renderWebGL();
+                }
+                
+                // Update particles
+                if (settings.effects.particles) {
+                    renderParticles();
+                } else {
+                    clearCanvas(particleCtx, particleCanvas);
+                }
+                
+                // Update glitch effect
+                if (settings.effects.glitch) {
+                    renderGlitch();
+                } else {
+                    clearCanvas(glitchCtx, glitchCanvas);
+                }
+                
+                // Request next frame
+                animationFrameId = requestAnimationFrame(animate);
+            }
+            
+            // Clear canvas
+            function clearCanvas(ctx, canvas) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            // Render WebGL
+            function renderWebGL() {
+                webglCtx.useProgram(shaderProgram);
+                
+                // Update uniforms
+                webglCtx.uniform1f(uTime, time);
+                webglCtx.uniform2f(uMouse, mouseX, mouseY);
+                webglCtx.uniform1f(uDistortion, settings.effects.ripple ? settings.distortion : 0);
+                webglCtx.uniform1f(uColorShift, settings.colorShift);
+                
+                // Draw
+                webglCtx.drawArrays(webglCtx.TRIANGLES, 0, 6);
+            }
+            
+            // Render particles
+            function renderParticles() {
+                clearCanvas(particleCtx, particleCanvas);
+                
+                // Portal center effect
+                const portalRadius = 100 + Math.sin(time) * 20;
+                const gradient = particleCtx.createRadialGradient(
+                    portalCenter.x, portalCenter.y, 0,
+                    portalCenter.x, portalCenter.y, portalRadius
+                );
+                
+                gradient.addColorStop(0, 'rgba(0, 255, 255, 0.2)');
+                gradient.addColorStop(0.5, 'rgba(128, 0, 255, 0.1)');
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                
+                particleCtx.fillStyle = gradient;
+                particleCtx.beginPath();
+                particleCtx.arc(portalCenter.x, portalCenter.y, portalRadius, 0, Math.PI * 2);
+                particleCtx.fill();
+                
+                // Draw particles
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    
+                    // Update position
+                    p.x += p.speedX;
+                    p.y += p.speedY;
+                    
+                    // Boundary check
+                    if (p.x < 0) p.x = particleCanvas.width;
+                    if (p.x > particleCanvas.width) p.x = 0;
+                    if (p.y < 0) p.y = particleCanvas.height;
+                    if (p.y > particleCanvas.height) p.y = 0;
+                    
+                    // Draw particle
+                    particleCtx.beginPath();
+                    particleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    particleCtx.fillStyle = p.color;
+                    particleCtx.fill();
+                    
+                    // Draw glow
+                    const glow = particleCtx.createRadialGradient(
+                        p.x, p.y, 0,
+                        p.x, p.y, p.size * 3
+                    );
+                    
+                    glow.addColorStop(0, p.color);
+                    glow.addColorStop(1, 'rgba(0, 0, 255, 0)');
+                    
+                    particleCtx.beginPath();
+                    particleCtx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
+                    particleCtx.fillStyle = glow;
+                    particleCtx.fill();
+                    
+                    // Mouse interaction
+                    const dx = mouseX - p.x;
+                    const dy = mouseY - p.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 100) {
+                        const force = (100 - dist) / 100;
+                        p.speedX += dx * force * 0.01;
+                        p.speedY += dy * force * 0.01;
+                    }
+                    
+                    // Apply drag
+                    p.speedX *= 0.99;
+                    p.speedY *= 0.99;
+                    
+                    // Limit speed
+                    const maxSpeed = 2;
+                    const speed = Math.sqrt(p.speedX * p.speedX + p.speedY * p.speedY);
+                    if (speed > maxSpeed) {
+                        p.speedX = (p.speedX / speed) * maxSpeed;
+                        p.speedY = (p.speedY / speed) * maxSpeed;
+                    }
+                }
+            }
+            
+            // Render glitch effect
+            function renderGlitch() {
+                glitchTimer++;
+                
+                // Random glitch intervals
+                if (glitchTimer % 30 === 0 || Math.random() < 0.01) {
+                    glitchInterval = Math.floor(Math.random() * 20) + 5;
+                }
+                
+                if (glitchTimer % glitchInterval === 0) {
+                    clearCanvas(glitchCtx, glitchCanvas);
+                    
+                    // Draw glitch rectangles
+                    const numGlitches = Math.floor(Math.random() * 10) + 5;
+                    
+                    for (let i = 0; i < numGlitches; i++) {
+                        const x = Math.random() * glitchCanvas.width;
+                        const y = Math.random() * glitchCanvas.height;
+                        const width = Math.random() * 100 + 50;
+                        const height = Math.random() * 30 + 10;
+                        const offsetX = (Math.random() - 0.5) * 20;
+                        
+                        // Draw glitch rectangle
+                        glitchCtx.globalAlpha = Math.random() * 0.5 + 0.25;
+                        glitchCtx.drawImage(
+                            webglCanvas,
+                            x, y, width, height,
+                            x + offsetX, y, width, height
+                        );
+                    }
+                    
+                    // RGB split
+                    if (Math.random() < 0.3) {
+                        const splitAmount = Math.random() * 10 + 5;
+                        
+                        // Red channel
+                        glitchCtx.globalCompositeOperation = 'screen';
+                        glitchCtx.globalAlpha = 0.5;
+                        glitchCtx.drawImage(webglCanvas, splitAmount, 0);
+                        
+                        // Blue channel
+                        glitchCtx.drawImage(webglCanvas, -splitAmount, 0);
+                    }
+                }
+            }
+            
+            // Initialize the application
+            init();
+        });
+    </script>
+</body>
+</html>
