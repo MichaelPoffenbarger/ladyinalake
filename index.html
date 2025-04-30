@@ -540,7 +540,7 @@
                         vec4 color = texture2D(u_image, distortedUV);
                         
                         // Color shifting
-                        float colorShiftAmount = u_colorShift * 0.1;
+                        float colorShiftAmount = u_colorShift * 0.01;
                         vec4 shiftedColor = vec4(
                             texture2D(u_image, distortedUV + vec2(colorShiftAmount, 0.0)).r,
                             color.g,
